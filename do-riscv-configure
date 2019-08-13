@@ -1,0 +1,26 @@
+#!/bin/sh
+ARCH=riscv64-unknown-elf
+case "$#" in
+    1)
+	arg="$1"
+	;;
+    *)
+	arg=`dirname $0`
+	;;
+esac
+meson "$arg" \
+        -Dprefix=/opt/ \
+	-Dtarget-optspace=true \
+	-Dnewlib-tinystdio=true \
+	-Dnewlib-supplied-syscalls=false \
+	-Dnewlib-reent-small=true\
+	-Dnewlib-wide-orient=false\
+	-Dnewlib-nano-malloc=true\
+	-Dnewlib-reent-small=true\
+	-Dlite-exit=true\
+	-Dnewlib-global-atexit=true\
+	-Dnewlib-global-errno=true\
+	-Dincludedir=picolibc/$ARCH/include \
+	-Dlibdir=picolibc/$ARCH/lib \
+	--buildtype plain \
+	--cross-file "$arg"/cross-$ARCH.txt

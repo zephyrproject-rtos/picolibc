@@ -30,7 +30,7 @@ int	_stat		(const char *, struct stat *);
 int	_fstat		(int, struct stat *);
 void *	_sbrk		(ptrdiff_t);
 pid_t	_getpid		(void);
-int	_kill		(int, int) __attribute__((__noreturn__));
+int	_kill		(int, int);
 void	_exit		(int);
 int	_close		(int);
 int	_swiclose	(int);
@@ -49,6 +49,7 @@ static int	error		(int);
 static int	get_errno	(void);
 static int	remap_handle	(int);
 static int	findslot	(int);
+static int	_kill_shared	(int, int, int) __attribute__((__noreturn__));
 
 /* Register name faking - works in collusion with the linker.  */
 register char * stack_ptr asm ("sp");
@@ -113,6 +114,16 @@ void
 initialise_monitor_handles (void)
 {
   int i;
+  
+  /* Open the standard file descriptors by opening the special
+   * teletype device, ":tt", read-only to obtain a descriptor for
+   * standard input and write-only to obtain a descriptor for standard
+   * output. Finally, open ":tt" in append mode to obtain a descriptor
+   * for standard error. Since this is a write mode, most kernels will
+   * probably return the same value as for standard output, but the
+   * kernel can differentiate the two using the mode flag and return a
+   * different descriptor for standard error.
+   */
 
 #ifdef ARM_RDI_MONITOR
   int volatile block[3];
@@ -162,11 +173,12 @@ get_errno (void)
   return do_AngelSWI (AngelSWI_Reason_Errno, NULL);
 #else
   register int r0 asm("r0");
-  asm ("swi %a1" : "=r"(r0): "i" (SWI_GetErrno));
+  asm ("swi %a1" : "=r"(r0) : "i" (SWI_GetErrno));
   return r0;
 #endif
 }
 
+/* Set errno and return result. */
 static int
 error (int result)
 {
@@ -182,7 +194,10 @@ wrap (int result)
   return result;
 }
 
-/* Returns # chars not! written.  */
+/* file, is a valid user file handle.
+   ptr, is a null terminated string.
+   len, is the length in bytes to read. 
+   Returns the number of bytes *not* written. */
 int
 _swiread (int file, void * ptr, size_t len)
 {
@@ -206,6 +221,9 @@ _swiread (int file, void * ptr, size_t len)
 #endif
 }
 
+/* file, is a valid user file handle.
+   Translates the return of _swiread into
+   bytes read. */
 int __attribute__((weak))
 _read (int file, void * ptr, size_t len)
 {
@@ -222,15 +240,13 @@ _read (int file, void * ptr, size_t len)
   return len - x;
 }
 
+/* file, is a user file descriptor. */
 off_t
 _swilseek (int file, off_t ptr, int dir)
 {
   _off_t res;
   int fh = remap_handle (file);
   int slot = findslot (fh);
-#ifdef ARM_RDI_MONITOR
-  int block[2];
-#endif
 
   if (dir == SEEK_CUR)
     {
@@ -248,6 +264,7 @@ _swilseek (int file, off_t ptr, int dir)
     }
 
 #ifdef ARM_RDI_MONITOR
+  int block[2];
   if (dir == SEEK_END)
     {
       block[0] = fh;
@@ -293,7 +310,8 @@ _lseek (int file, off_t ptr, int dir)
   return wrap (_swilseek (file, ptr, dir));
 }
 
-/* Returns #chars not! written.  */
+/* file, is a valid internal file handle.
+   Returns the number of bytes *not* written. */
 int
 _swiwrite (int file, const void * ptr, size_t len)
 {
@@ -318,6 +336,7 @@ _swiwrite (int file, const void * ptr, size_t len)
 #endif
 }
 
+/* file, is a user file descriptor. */
 int __attribute__((weak))
 _write (int file, const void * ptr, size_t len)
 {
@@ -365,7 +384,7 @@ _swiopen (const char * path, int flags)
 
   if (flags & O_APPEND)
     {
-      aflags &= ~4;     /* Can't ask for w AND a; means just 'a'.  */
+      aflags &= ~4; /* Can't ask for w AND a; means just 'a'.  */
       aflags |= 8;
     }
 
@@ -424,21 +443,35 @@ _close (int file)
   return wrap (_swiclose (file));
 }
 
-int
-_kill (int pid, int sig)
+static int
+_kill_shared (int pid, int sig, int reason)
 {
-  (void)pid; (void)sig;
+  (void) pid; (void) sig;
 #ifdef ARM_RDI_MONITOR
   /* Note: The pid argument is thrown away.  */
-  switch (sig) {
-	  case SIGABRT:
-		  do_AngelSWI (AngelSWI_Reason_ReportException,
-			       (void *) ADP_Stopped_RunTimeError);
-		  __builtin_unreachable();
-	  default:
-		  do_AngelSWI (AngelSWI_Reason_ReportException,
-			       (void *) ADP_Stopped_ApplicationExit);
-  }
+  int block[2];
+  block[1] = sig;
+  block[0] = reason;
+  int insn;
+
+#if SEMIHOST_V2
+  if (_has_ext_exit_extended ())
+    {
+      insn = AngelSWI_Reason_ReportExceptionExtended;
+    }
+  else
+#endif
+    {
+      insn = AngelSWI_Reason_ReportException;
+    }
+
+#if SEMIHOST_V2
+if (_has_ext_exit_extended ())
+  do_AngelSWI (insn, block);
+else
+#endif
+  do_AngelSWI (insn, (void*)block[0]);
+
 #else
   asm ("swi %a0" :: "i" (SWI_Exit));
 #endif
@@ -446,15 +479,24 @@ _kill (int pid, int sig)
   __builtin_unreachable();
 }
 
+int
+_kill (int pid, int sig)
+{
+  if (sig == SIGABRT)
+    _kill_shared (pid, sig, ADP_Stopped_RunTimeError);
+  else
+    _kill_shared (pid, sig, ADP_Stopped_ApplicationExit);
+}
+
 void
 _exit (int status)
 {
-  /* There is only one SWI for both _exit and _kill. For _exit, call
-     the SWI with the second argument set to -1, an invalid value for
-     signum, so that the SWI handler can distinguish the two calls.
-     Note: The RDI implementation of _kill throws away both its
-     arguments.  */
-  _kill(status, -1);
+  /* The same SWI is used for both _exit and _kill.
+     For _exit, call the SWI with "reason" set to ADP_Stopped_ApplicationExit
+     to mark a standard exit.
+     Note: The RDI implementation of _kill_shared throws away all its
+     arguments and all implementations ignore the first argument.  */
+  _kill_shared (-1, status, ADP_Stopped_ApplicationExit);
 }
 
 pid_t
@@ -463,10 +505,13 @@ _getpid (void)
   return (pid_t)1;
 }
 
+/* Heap limit returned from SYS_HEAPINFO Angel semihost call.  */
+uint __heap_limit = 0xcafedead;
+
 void * __attribute__((weak))
 _sbrk (ptrdiff_t incr)
 {
-  extern char   end asm ("end");	/* Defined by the linker.  */
+  extern char   end asm ("end"); /* Defined by the linker.  */
   static char * heap_end;
   char *        prev_heap_end;
 
@@ -475,7 +520,9 @@ _sbrk (ptrdiff_t incr)
 
   prev_heap_end = heap_end;
 
-  if (heap_end + incr > stack_ptr)
+  if ((heap_end + incr > stack_ptr)
+      /* Honour heap limit if it's valid.  */
+      || (__heap_limit != 0xcafedead && heap_end + incr > (char *)__heap_limit))
     {
       /* Some of the libstdc++-v3 tests rely upon detecting
 	 out of memory errors, so do not abort here.  */
@@ -498,7 +545,7 @@ _sbrk (ptrdiff_t incr)
 
 extern void memset (struct stat *, int, unsigned int);
 
-int
+int __attribute__((weak))
 _fstat (int file, struct stat * st)
 {
   memset (st, 0, sizeof (* st));
@@ -508,7 +555,8 @@ _fstat (int file, struct stat * st)
   file = file;
 }
 
-int _stat (const char *fname, struct stat *st)
+int __attribute__((weak))
+_stat (const char *fname, struct stat *st)
 {
   int file;
 
@@ -524,20 +572,19 @@ int _stat (const char *fname, struct stat *st)
   return 0;
 }
 
-int
-_link (const char *__path1 __attribute__ ((unused)),
-       const char *__path2 __attribute__ ((unused)))
+int __attribute__((weak))
+_link (const char *__path1 __attribute__ ((unused)), const char *__path2 __attribute__ ((unused)))
 {
   errno = ENOSYS;
   return -1;
 }
 
 int
-_unlink (const char *path __attribute__ ((unused)))
+_unlink (const char *path)
 {
 #ifdef ARM_RDI_MONITOR
   int block[2];
-  block[0] = (int) path;
+  block[0] = (int)path;
   block[1] = strlen(path);
   return wrap (do_AngelSWI (AngelSWI_Reason_Remove, block)) ? -1 : 0;
 #else
@@ -630,13 +677,13 @@ _system (const char *s)
      meaning to its return value.  Try to do something reasonable....  */
   if (!s)
     return 1;  /* maybe there is a shell available? we can hope. :-P */
-  block[0] = (int) s;
+  block[0] = (int)s;
   block[1] = strlen (s);
   e = wrap (do_AngelSWI (AngelSWI_Reason_System, block));
   if ((e >= 0) && (e < 256))
     {
       /* We have to convert e, an exit status to the encoded status of
-	 the command.  To avoid hard coding the exit status, we simply
+         the command.  To avoid hard coding the exit status, we simply
 	 loop until we find the right position.  */
       int exit_code;
 
