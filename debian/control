@@ -13,7 +13,8 @@ Architecture: all
 Depends: ${misc:Depends}
 Description: Smaller embedded C library for RISC-V development
  PicoLibc is a combination of Newlib and AVR libc bits designed
- for small-RAM embedded systems.
+ for small-RAM embedded systems. This package has binaries for
+ RISC-V processors.
 
 Package: picolibc-arm-none-eabi
 Architecture: all
@@ -21,4 +22,5 @@ Depends: ${misc:Depends}
 Replaces: libnewlib-nano-arm-none-eabi
 Description: Smaller embedded C library for ARM development
  PicoLibc is a combination of Newlib and AVR libc bits designed
- for small-RAM embedded systems.
+ for small-RAM embedded systems. This package has binaries for
+ ARM processors.
