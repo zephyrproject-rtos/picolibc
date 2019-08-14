@@ -26,12 +26,16 @@ worry about these omitted licenses, so long as you do not modify the
 copyright information already in place.
 
 Parts of this work are licensed under the terms of the GNU General
-Public License. On Debian systems, the complete text of this license
-can be found in /usr/share/common-licenses/GPL.
+Public License. On Debian systems, the complete text of these licenses
+can be found in /usr/share/common-licenses/GPL-2, and
+/usr/share/common-licenses/GPL-3.
+
 
 Parts of this work are licensed under the terms of the GNU Library
-General Public License. On Debian systems, the complete text of this
-license be found in /usr/share/common-licenses/LGPL.
+General Public License. On Debian systems, the complete text of these
+licenses be found in /usr/share/common-licenses/LGPL-2,
+/usr/share/common-licenses/LGPL-2.1 and
+/usr/share/common-licenses/LGPL-3.
 
 (1) University of California, Berkeley
 
