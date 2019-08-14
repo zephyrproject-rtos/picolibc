@@ -1,11 +1,11 @@
 picolibc (3.1.0.2019.08.08-1) unstable; urgency=medium
-	
+
   * 3.1.0 newlib with changes up to 2019.08.08
   * Add riscv target
   * Incorporate printf fixes from NuttX
 
  -- Keith Packard <keithp@keithp.com>  Mon, 22 Jul 2019 12:05:24 -0700
-	
+
 libnewlib-nano (2.11.2-1) unstable; urgency=medium
 
   * 2.11.2 upstream release
