@@ -44,7 +44,7 @@ endif()
 set(CMAKE_SYSTEM_SUB_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR})
 
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686" OR
-    ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64") 
+    ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
   set(CMAKE_SYSTEM_PROCESSOR "x86")
 endif()
 
@@ -100,7 +100,7 @@ if(NOT DEFINED PREFER_SIZE_OVER_SPEED)
   else()
     set(default_prefer_size 0)
   endif()
-  option(PREFER_SIZE_OVER_SPEED ${default_prefer_size})
+  option(PREFER_SIZE_OVER_SPEED 0)
 endif()
 
 # Obsoleted. Reentrant syscalls provided for us

@@ -154,7 +154,7 @@ if set_double_equals_float
   float_double_code = '''
 char size_test[sizeof(float) == sizeof(double) ? 1 : -1];
 '''
-  set_double_equals_float = 
+  set_double_equals_float =
   double_equals_float = cc.compiles(float_double_code, name : 'double same as float', args : core_c_args)
 endif
 
@@ -502,7 +502,7 @@ else
   specs_install = true
 endif
 
-# Let targets add more support libraries 
+# Let targets add more support libraries
 additional_libs_list = meson.get_cross_property('additional_libs', [])
 
 if cc.get_id() == 'ccomp'
@@ -647,7 +647,7 @@ if enable_multilib
   gen_multilib_crt0_path = specs_prefix_format.format(get_option('libdir') / '%M' / crt0_expr)
   crt0_gen = gen_format.format(gen_multilib_crt0_path)
 endif
-  
+
 #
 # Construct the *startfile value from the options computed
 # above. As there's only one value, it's either the
@@ -1032,7 +1032,7 @@ conf_data.set('_RETARGETABLE_LOCKING', get_option('newlib-retargetable-locking')
 conf_data.set('TINY_STDIO', tinystdio, description: 'Use tiny stdio from gcc avr')
 conf_data.set('_IEEE_LIBM', not get_option('want-math-errno'), description: 'math library does not set errno (offering only ieee semantics)')
 conf_data.set('_WANT_MATH_ERRNO', get_option('want-math-errno'), description: 'math library sets errno')
-conf_data.set('PREFER_SIZE_OVER_SPEED', get_option('optimization') == 's', description: 'Optimize for space over speed')
+# conf_data.set('PREFER_SIZE_OVER_SPEED', get_option('optimization') == 's', description: 'Optimize for space over speed')
 conf_data.set('FAST_STRCMP', fast_strcmp, description: 'Always optimize strcmp for performance')
 conf_data.set('__HAVE_LOCALE_INFO__', newlib_locale_info, description: 'locale support')
 conf_data.set('__HAVE_LOCALE_INFO_EXTENDED__', get_option('newlib-locale-info-extended'), description: 'extended locale support')
