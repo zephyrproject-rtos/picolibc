@@ -91,18 +91,26 @@ if(CONFIG_PICOLIBC_USE_MODULE)
   # Fetch zephyr compile flags from interface
   get_property(PICOLIBC_EXTRA_COMPILE_OPTIONS TARGET zephyr_interface PROPERTY INTERFACE_COMPILE_OPTIONS)
 
-  # Enable POSIX APIs
-
-  # Link to C library and libgcc (on non-armclang toolchains)
-
-  if(${ZEPHYR_TOOLCHAIN_VARIANT} STREQUAL "armclang")
-    zephyr_link_libraries(c)
+  # Check to see if Zephyr uses dependencies
+  # to manage the C library bits
+  if (TARGET c_picolibc)
+    # Link to common C library code, picolibc stubs and (maybe) gcc
+    if(${ZEPHYR_TOOLCHAIN_VARIANT} STREQUAL "armclang")
+      set(PICOLIBC_LINK_LIBRARIES c_common c_picolibc)
+    else()
+      set(PICOLIBC_LINK_LIBRARIES c_common c_picolibc gcc)
+    endif()
   else()
-    zephyr_link_libraries(c -lgcc)
+    if(${ZEPHYR_TOOLCHAIN_VARIANT} STREQUAL "armclang")
+      zephyr_link_libraries(c)
+    else()
+      zephyr_link_libraries(c -lgcc)
+    endif()
+
+    # Provide an alias target for zephyr to use
+
+    add_custom_target(PicolibcBuild)
+    add_dependencies(PicolibcBuild c)
+
   endif()
-
-  # Provide an alias target for zephyr to use
-
-  add_custom_target(PicolibcBuild)
-  add_dependencies(PicolibcBuild c)
 endif()

@@ -549,6 +549,7 @@ picolibc_supported_compile_options(
 add_library(c STATIC)
 
 target_compile_options(c PRIVATE ${PICOLIBC_COMPILE_OPTIONS})
+target_link_libraries(c INTERFACE ${PICOLIBC_LINK_LIBRARIES})
 
 set(PICOLIBC_INCLUDE_DIRECTORIES
   "${PICOLIBC_INCLUDE}")
