@@ -36,7 +36,7 @@
 # Zephyr-specific hooks for picolibc
 
 if(CONFIG_PICOLIBC_USE_MODULE)
-  zephyr_include_directories(${PROJECT_BINARY_DIR}/picolibc/include)
+  zephyr_system_include_directories(${PROJECT_BINARY_DIR}/picolibc/include)
 
   zephyr_compile_definitions(__LINUX_ERRNO_EXTENSIONS__)
 
