@@ -216,11 +216,13 @@ typedef	__nlink_t	nlink_t;	/* link count */
 #ifndef _CLOCKID_T_DECLARED
 typedef	__clockid_t	clockid_t;
 #define	_CLOCKID_T_DECLARED
+#define __clockid_t_defined
 #endif
 
 #ifndef _TIMER_T_DECLARED
 typedef	__timer_t	timer_t;
 #define	_TIMER_T_DECLARED
+#define __timer_t_defined
 #endif
 
 #ifndef _USECONDS_T_DECLARED
