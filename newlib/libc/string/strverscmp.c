@@ -76,7 +76,7 @@ int strverscmp(const char *l0, const char *r0)
 		else if (c!='0') z=0;
 	}
 
-	if (l[dp]<'1' + 9U && r[dp]<'1' + 9U) {
+	if ((unsigned char)(l[dp]-'1')<9U && (unsigned char)(r[dp]-'1')<9U) {
 		/* If we're looking at non-degenerate digit sequences starting
 		 * with nonzero digits, longest digit string is greater. */
 		for (j=i; isdigit(l[j]); j++)
