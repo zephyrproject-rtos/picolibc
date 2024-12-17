@@ -100,6 +100,8 @@ if(CONFIG_PICOLIBC_USE_MODULE)
 
   # Fetch zephyr compile flags from interface
   get_property(PICOLIBC_EXTRA_COMPILE_OPTIONS TARGET zephyr_interface PROPERTY INTERFACE_COMPILE_OPTIONS)
+  # Disable LTO
+  list(APPEND PICOLIBC_EXTRA_COMPILE_OPTIONS -fno-lto)
 
   # Tell Zephyr about the module built picolibc library to link against.
   # We need to construct the absolute path to picolibc in same fashion as CMake
