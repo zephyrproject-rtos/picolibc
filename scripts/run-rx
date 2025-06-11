@@ -52,6 +52,17 @@ esac
 qemu="qemu-system-rx"
 cpu=rx62n
 
+gdb -fullname -args $qemu \
+  -chardev stdio,id=con,mux=on \
+  -machine gdbsim-r5f562n8 \
+  -cpu $cpu \
+  -serial chardev:con \
+  -mon chardev=con,mode=readline \
+  -net none \
+  -nographic \
+  -kernel "$elf" "$@"
+exit 0
+
 "$dir"/monitor-e9 $qemu \
   -chardev stdio,id=con,mux=on \
   -machine gdbsim-r5f562n8 \
@@ -60,4 +71,6 @@ cpu=rx62n
   -mon chardev=con,mode=readline \
   -net none \
   -nographic \
-  -device loader,file="$elf" "$@" < /dev/null
+  -kernel "$elf" "$@" < /dev/null
+
+#  -device loader,file="$elf" "$@" < /dev/null
