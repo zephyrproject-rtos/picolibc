@@ -194,7 +194,7 @@ if nm "$elf" | grep -q __riscv_enable_smrnmi; then
 fi
 
 # Set the target machine
-machine=virt,accel=tcg
+machine=none,accel=tcg
 
 # Map stdio to a multiplexed character device so we can use it
 # for the monitor and semihosting output
@@ -230,7 +230,7 @@ echo $stdin | \
     -serial "$serial" \
     -machine "$machine" \
     -cpu "$cpu" \
-    -kernel "$elf" \
+    -device loader,file="$elf",cpu-num=0 \
     -nographic \
     -bios none \
     -m 2G "$@"
