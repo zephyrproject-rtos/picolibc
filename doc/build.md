@@ -42,6 +42,7 @@ These options control some general build configuration values.
 | analyzer                    | false   | Enable the analyzer while compiling with -fanalyzer                                  |
 | assert-verbose              | false   | Display file, line and expression in assert() messages                               |
 | fast-strcmp                 | true    | Always optimize strcmp for performance (to make Dhrystone happy)                     |
+| picolibc-export             | true    | Annotate public picolibc APIs with default (exported) visibility                     |
 
 ### Installation options
 
